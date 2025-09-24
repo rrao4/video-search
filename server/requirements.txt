@@ -1,0 +1,8 @@
+flask
+python-dotenv
+flask-restx
+flask-sqlalchemy
+flask-cors
+pgvector
+Flask-Login
+Werkzeug
