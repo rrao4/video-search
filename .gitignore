@@ -2,3 +2,7 @@
 **/__pycache__/
 **/.venv/
 **/.vscode/
+**/node_modules/
+server/video_pipeline/data/*
+server/video_pipeline/webp_output/*
+**/docker-compose.yml

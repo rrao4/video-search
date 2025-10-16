@@ -6,3 +6,7 @@ flask-cors
 pgvector
 Flask-Login
 Werkzeug
+boto3
+txtai
+ffmpeg-python
+requests

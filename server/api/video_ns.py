@@ -60,18 +60,25 @@ class VideoAPI(Resource):
             videos = Video.query.filter_by(genre=query).all()
 
         return [video.to_dict() for video in videos], 200
-    
-# @video_ns.route("/<int:id>")
-# class VideoAPI(Resource):
-#     @video_ns.marshal_with(video_model)
-#     def get(self, id):
-#         """
-#         Get a video by ID
-#         """
-#         video = Video.query.get(id)
-#         if not video:
-#             return jsonify({"error": "Video not found"}), 404
-#         return video.to_dict(), 200
+
+@video_ns.route("/<int:id>")
+class VideoByIdAPI(Resource):
+    @video_ns.marshal_with(video_model)
+    def get(self, id):
+        """
+        Get a video by ID
+        """
+        video = Video.query.options(
+            joinedload(Video.video_property_values)
+            .joinedload(VideoPropertyValue.property_value)
+            .joinedload(PropertyValue.property)
+            .joinedload(Property.parent),
+            joinedload(Video.descriptions)
+        ).get(id)
+        
+        if not video:
+            return {"error": "Video not found"}, 404
+        return video.to_dict(), 200
 
     @video_ns.expect(video_input_model)
     @video_ns.marshal_with(video_model)
@@ -99,3 +106,15 @@ class VideoAPI(Resource):
         db.session.delete(video)
         db.session.commit()
         return jsonify({"message": "Video deleted"}), 200
+    
+# @video_ns.route("/<int:id>")
+# class VideoAPI(Resource):
+#     @video_ns.marshal_with(video_model)
+#     def get(self, id):
+#         """
+#         Get a video by ID
+#         """
+#         video = Video.query.get(id)
+#         if not video:
+#             return jsonify({"error": "Video not found"}), 404
+#         return video.to_dict(), 200

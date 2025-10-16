@@ -1,7 +1,7 @@
-from flask import Flask 
+from flask import Flask, send_from_directory 
 import os
 from dotenv import load_dotenv
-from extensions import api, db, cors
+from extensions import api, db, cors, login_manager
 #from api.resources import ns
 from api.auth_ns import auth
 from api.video_ns import video_ns
@@ -22,7 +22,9 @@ def create_app():
 
     api.init_app(app)
     db.init_app(app)
-    cors.init_app(app, origins='*')
+    cors.init_app(app, origins='*') # TODO: update this later on to the frontend origin
+    # login_manager.init_app(app)
+
     #api.add_namespace(ns)
     api.add_namespace(auth)
     api.add_namespace(video_ns)
@@ -32,8 +34,17 @@ def create_app():
     api.add_namespace(video_embedding_ns)
     api.add_namespace(video_description_ns)
     api.add_namespace(video_property_value_ns)
+
+    # Static file routes for WebP videos
+    # TODO: once we store the WebP's in cloud, remove this route and serve directly with cloud URLs
+    @app.route('/static/webp/<filename>')
+    def serve_webp(filename):
+        """Serve WebP files from the video_pipeline/webp_output directory"""
+        webp_dir = os.path.join(os.path.dirname(__file__), 'video_pipeline', 'webp_output')
+        return send_from_directory(webp_dir, filename)
+
     return app
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
