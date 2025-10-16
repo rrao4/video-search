@@ -129,6 +129,9 @@ More metadata columns can be added.
 - `collection_name`: display name
 - `owner_id`: FK to `users.id`, representing the user who created this collection. Non-owners can be shared a collection, but cannot modify it.
 
+**Index:** 
+- `owner_id`: make searches like "search all collections where owner_id=x" faster (this is needed to display all the collections that a user owns in the UI)
+
 ---
 
 ### `user_collection`

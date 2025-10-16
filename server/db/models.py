@@ -12,6 +12,7 @@ class Video(db.Model):
     __tablename__ = "video"
 
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
     path = db.Column(db.String, nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), nullable=False)
 
@@ -46,6 +47,7 @@ class Video(db.Model):
 
     __table_args__ = (
         db.UniqueConstraint("path", name="uq_video_path"),
+        db.Index("ix_video_name", "name"),
     )
 
     def __repr__(self):
@@ -181,6 +183,7 @@ class VideoPropertyValue(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     video_id = db.Column(db.Integer, db.ForeignKey("video.id", ondelete="CASCADE"), nullable=False)
     property_value_id = db.Column(db.Integer, db.ForeignKey("property_value.id", ondelete="CASCADE"), nullable=False)
+    confidence_score = db.Column(db.Float, nullable=False, default=0.0)
 
     video = db.relationship("Video", back_populates="video_property_values")
     property_value = db.relationship("PropertyValue")
@@ -188,7 +191,9 @@ class VideoPropertyValue(db.Model):
     __table_args__ = (
         db.Index("ix_video_property_value_property_value_id", "property_value_id"),
         db.Index("ix_video_property_value_video_id", "video_id"),
+        db.Index("ix_video_property_value_confidence_score", "confidence_score"),
         db.UniqueConstraint("video_id", "property_value_id", name="uq_video_property_value_once"),
+        db.CheckConstraint("confidence_score >= 0.0 AND confidence_score <= 1.0", name="ck_video_property_value_confidence_score_range"),
     )
 
     def __repr__(self):
@@ -242,11 +247,14 @@ class VideoDescription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     video_id = db.Column(db.Integer, db.ForeignKey("video.id", ondelete="CASCADE"), nullable=False)
     description = db.Column(db.String, nullable=False)
+    confidence_score = db.Column(db.Float, nullable=False, default=0.0)
 
     video = db.relationship("Video", back_populates="descriptions")
 
     __table_args__ = (
         db.Index("ix_video_description_video_id", "video_id"),
+        db.Index("ix_video_description_confidence_score", "confidence_score"),
+        db.CheckConstraint("confidence_score >= 0.0 AND confidence_score <= 1.0", name="ck_video_description_confidence_score_range"),
     )
 
     def __repr__(self):
@@ -295,8 +303,8 @@ class User(db.Model, UserMixin):
     def password(self, password):
         self.hashed_password = generate_password_hash(password)
 
-    def check_password(self, password):
-        return check_password_hash(self.password, password)
+    def check_password(self, plaintext_password):
+        return check_password_hash(self.password, plaintext_password)
 
     def to_dict(self):
         return {
@@ -338,6 +346,10 @@ class Collection(db.Model):
         primaryjoin="Collection.id == CollectionVideo.collection_id",
         secondaryjoin="Video.id == CollectionVideo.video_id",
         viewonly=True,
+    )
+
+    __table_args__ = (
+        db.Index("ix_collection_owner_id", "owner_id"),
     )
 
 
